@@ -53,3 +53,10 @@ def test_remove_whole_line():
 def test_remove_missing_item_is_rejected():
     with pytest.raises(ValueError):
         Cart().remove_item("pen")
+
+
+def test_total_with_bulk_discount():
+    cart = Cart()
+    cart.add_item("pen", "1.00", 20)
+    cart.add_item("notebook", "3.00", 2)
+    assert cart.total_with_bulk_discount() == Decimal("25.00")
