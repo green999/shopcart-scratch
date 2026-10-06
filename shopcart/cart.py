@@ -5,6 +5,7 @@ from decimal import Decimal
 
 from shopcart.discounts import bulk_discount_rate
 from shopcart.money import round_cents, to_decimal
+from shopcart.shipping import shipping_cost
 
 
 @dataclass
@@ -79,3 +80,15 @@ class Cart:
             rate = bulk_discount_rate(item.quantity)
             total += item.total * (Decimal("100") - rate) / Decimal("100")
         return round_cents(total)
+
+    def total(self, method: str = "standard") -> Decimal:
+        """Cart subtotal plus shipping for ``method``, rounded to cents.
+
+        Shipping is based on the cents-rounded subtotal. An empty cart is 0.00
+        for every method, with no shipping charged. An unknown method raises
+        ``ValueError`` for a non-empty cart.
+        """
+        if not self._items:
+            return Decimal("0.00")
+        subtotal = self.subtotal()
+        return round_cents(subtotal + shipping_cost(subtotal, method))
