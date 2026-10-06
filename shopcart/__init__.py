@@ -10,6 +10,7 @@ from shopcart.discounts import (
 from shopcart.money import round_cents, to_decimal
 from shopcart.orders import Page, paginate
 from shopcart.shipping import shipping_cost
+from shopcart.tax import tax_for, total_with_tax
 
 __all__ = [
     "Cart",
@@ -22,5 +23,7 @@ __all__ = [
     "paginate",
     "round_cents",
     "shipping_cost",
+    "tax_for",
     "to_decimal",
+    "total_with_tax",
 ]
