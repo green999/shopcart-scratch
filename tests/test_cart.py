@@ -77,3 +77,39 @@ def test_total_with_bulk_discount_rounds_only_once():
     for sku in ("a", "b", "c"):
         cart.add_item(sku, "0.01", 10)
     assert cart.total_with_bulk_discount() == Decimal("0.29")
+
+
+def _cart_with_subtotal(amount: str) -> Cart:
+    cart = Cart()
+    cart.add_item("thing", amount, 1)
+    return cart
+
+
+def test_total_adds_shipping_below_threshold():
+    cart = _cart_with_subtotal("49.99")
+    assert cart.total() == Decimal("55.98")
+    assert cart.total("express") == Decimal("64.98")
+    assert cart.total("pickup") == Decimal("49.99")
+
+
+def test_total_standard_free_at_threshold():
+    assert _cart_with_subtotal("50.00").total() == Decimal("50.00")
+    assert _cart_with_subtotal("50.01").total() == Decimal("50.01")
+
+
+def test_total_express_not_free_above_threshold():
+    assert _cart_with_subtotal("50.00").total("express") == Decimal("64.99")
+
+
+def test_total_method_is_case_and_whitespace_insensitive():
+    assert _cart_with_subtotal("10.00").total(" EXPRESS ") == Decimal("24.99")
+
+
+def test_total_unknown_method_rejected():
+    with pytest.raises(ValueError):
+        _cart_with_subtotal("10.00").total("drone")
+
+
+@pytest.mark.parametrize("method", ["standard", "express", "pickup"])
+def test_empty_cart_total_is_zero_for_every_method(method):
+    assert Cart().total(method) == Decimal("0.00")

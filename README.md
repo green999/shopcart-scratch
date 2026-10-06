@@ -17,4 +17,5 @@ ruff check .
 | `shopcart/cart.py` | `Cart` and `LineItem` |
 | `shopcart/discounts.py` | Percentage and coupon discounts |
 | `shopcart/orders.py` | Order-history pagination |
+| `shopcart/shipping.py` | Shipping cost by method and subtotal |
 | `tests/` | pytest suite |
