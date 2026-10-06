@@ -70,3 +70,15 @@ def test_total_with_coupon_unknown_code():
     cart.add_item("A", "1.00")
     with pytest.raises(ValueError):
         cart.total_with_coupon("NOPE")
+
+
+def test_total_with_coupon_empty_cart_unknown_code():
+    with pytest.raises(ValueError):
+        Cart().total_with_coupon("NOPE")
+
+
+def test_total_with_coupon_rounds_only_once():
+    cart = Cart()
+    for sku in ("a", "b", "c"):
+        cart.add_item(sku, "0.05")
+    assert cart.total_with_coupon("WELCOME10") == Decimal("0.14")

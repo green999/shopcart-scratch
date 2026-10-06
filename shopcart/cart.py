@@ -74,7 +74,5 @@ class Cart:
 
         An empty cart is 0.00. An unknown code raises ``ValueError``.
         """
-        total = Decimal("0")
-        for item in self._items.values():
-            total += apply_coupon(item.total, code)
-        return round_cents(total)
+        total = sum((item.total for item in self._items.values()), Decimal("0"))
+        return apply_coupon(total, code)
