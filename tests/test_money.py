@@ -29,7 +29,6 @@ def test_to_decimal_passes_decimal_through():
     assert to_decimal(Decimal("1.50")) == Decimal("1.50")
 
 
-@pytest.mark.xfail(reason="https://github.com/green999/shopcart-scratch/issues/9")
 @pytest.mark.parametrize("value", ["abc", "", "NaN", "Infinity", "-Infinity"])
 def test_to_decimal_rejects_non_numeric_and_non_finite(value):
     with pytest.raises(ValueError):
