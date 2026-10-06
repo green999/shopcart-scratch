@@ -75,7 +75,7 @@ class Cart:
         """Rebuild a cart from ``to_dict`` output by calling ``add_item``.
 
         All ``add_item`` validation applies. A missing key, a float price, a
-        non-integer or non-positive quantity, or malformed data raises
+        non-string sku, a non-integer or non-positive quantity, or malformed data raises
         ``ValueError``. Unknown extra keys are ignored. An empty ``items`` list
         gives an empty cart.
         """
@@ -86,6 +86,10 @@ class Cart:
             raise ValueError(f"invalid cart data: {exc!r}") from None
         cart = cls()
         for sku, unit_price, quantity in rows:
+            if not isinstance(sku, str):
+                raise ValueError("sku must be a string")
+            if not isinstance(unit_price, str | int | Decimal):
+                raise ValueError("unit_price must be a string, int or Decimal, not float")
             if isinstance(quantity, bool) or not isinstance(quantity, int):
                 raise ValueError("quantity must be an integer")
             cart.add_item(sku, unit_price, quantity)

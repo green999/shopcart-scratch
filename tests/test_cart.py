@@ -254,3 +254,20 @@ def test_from_dict_applies_add_item_validation():
                 ]
             }
         )
+
+
+@pytest.mark.parametrize("sku", [5, None, [], 1.5])
+def test_from_dict_rejects_non_string_sku(sku):
+    with pytest.raises(ValueError):
+        Cart.from_dict({"items": [{"sku": sku, "unit_price": "1.50", "quantity": 1}]})
+
+
+@pytest.mark.parametrize("price", [None, [], {}, "abc", "NaN"])
+def test_from_dict_rejects_invalid_price_with_value_error(price):
+    with pytest.raises(ValueError):
+        Cart.from_dict({"items": [{"sku": "pen", "unit_price": price, "quantity": 1}]})
+
+
+def test_from_dict_accepts_int_price():
+    cart = Cart.from_dict({"items": [{"sku": "pen", "unit_price": 3, "quantity": 1}]})
+    assert cart.subtotal() == Decimal("3.00")
