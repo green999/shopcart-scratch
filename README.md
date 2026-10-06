@@ -18,4 +18,5 @@ ruff check .
 | `shopcart/discounts.py` | Percentage and coupon discounts |
 | `shopcart/orders.py` | Order-history pagination |
 | `shopcart/shipping.py` | Shipping cost by method and subtotal |
+| `shopcart/tax.py` | Sales tax by region |
 | `tests/` | pytest suite |
