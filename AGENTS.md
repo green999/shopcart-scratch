@@ -51,3 +51,10 @@ When reviewing a PR in this repo, prioritise in this order:
 2. Money handling: any `float`, early rounding or lost precision is a blocking finding.
 3. Missing tests for changed behaviour.
 4. Readability and naming. Do not comment on style that `ruff` already enforces.
+
+## Working from issues
+- One issue = one branch = one PR. Branch name: feature/<issue-number>-<slug>.
+- Start by listing the tasks you will do, in order.
+- Write or update tests for each task before moving to the next.
+- PR description must include "Closes #<issue-number>", the task list with what was done, and the test and lint output.
+- If the issue is ambiguous, ask in a comment and stop. Do not guess.
