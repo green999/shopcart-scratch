@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from decimal import Decimal
 
+from shopcart.discounts import apply_coupon
 from shopcart.money import round_cents, to_decimal
 
 
@@ -67,3 +68,11 @@ class Cart:
     def subtotal(self) -> Decimal:
         """Sum of line totals, rounded to cents. An empty cart is 0.00."""
         return round_cents(sum((item.total for item in self._items.values()), Decimal("0")))
+
+    def total_with_coupon(self, code: str) -> Decimal:
+        """Subtotal after applying coupon ``code``, rounded to cents.
+
+        An empty cart is 0.00. An unknown code raises ``ValueError``.
+        """
+        total = sum((item.total for item in self._items.values()), Decimal("0"))
+        return apply_coupon(total, code)

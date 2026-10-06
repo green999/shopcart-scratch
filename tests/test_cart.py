@@ -53,3 +53,32 @@ def test_remove_whole_line():
 def test_remove_missing_item_is_rejected():
     with pytest.raises(ValueError):
         Cart().remove_item("pen")
+
+
+def test_total_with_coupon_single_line():
+    cart = Cart()
+    cart.add_item("A", "20.00", 2)
+    assert cart.total_with_coupon("welcome10") == Decimal("36.00")
+
+
+def test_total_with_coupon_empty_cart():
+    assert Cart().total_with_coupon("WELCOME10") == Decimal("0.00")
+
+
+def test_total_with_coupon_unknown_code():
+    cart = Cart()
+    cart.add_item("A", "1.00")
+    with pytest.raises(ValueError):
+        cart.total_with_coupon("NOPE")
+
+
+def test_total_with_coupon_empty_cart_unknown_code():
+    with pytest.raises(ValueError):
+        Cart().total_with_coupon("NOPE")
+
+
+def test_total_with_coupon_rounds_only_once():
+    cart = Cart()
+    for sku in ("a", "b", "c"):
+        cart.add_item(sku, "0.05")
+    assert cart.total_with_coupon("WELCOME10") == Decimal("0.14")
