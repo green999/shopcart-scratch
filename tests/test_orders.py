@@ -55,14 +55,12 @@ def test_empty_sequence_rejects_page_two():
         paginate([], page=2)
 
 
-@pytest.mark.xfail(reason="https://github.com/green999/shopcart-scratch/issues/8")
 def test_exact_multiple_of_per_page_has_no_extra_page():
     page = paginate(list(range(40)), page=2, per_page=20)
     assert page.total_pages == 2
     assert not page.has_next
 
 
-@pytest.mark.xfail(reason="https://github.com/green999/shopcart-scratch/issues/8")
 def test_page_past_the_end_rejected_for_exact_multiple():
     with pytest.raises(ValueError):
         paginate(list(range(40)), page=3, per_page=20)
