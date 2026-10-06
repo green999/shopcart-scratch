@@ -2,7 +2,12 @@ from decimal import Decimal
 
 import pytest
 
-from shopcart.discounts import apply_coupon, apply_percent_discount
+from shopcart.discounts import (
+    apply_bulk_discount,
+    apply_coupon,
+    apply_percent_discount,
+    bulk_discount_rate,
+)
 
 
 def test_percent_discount():
@@ -28,3 +33,27 @@ def test_coupon_is_case_insensitive_and_trimmed():
 def test_unknown_coupon_is_rejected():
     with pytest.raises(ValueError):
         apply_coupon(Decimal("100.00"), "NOPE")
+
+
+def test_bulk_discount_rate_tiers():
+    assert bulk_discount_rate(5) == Decimal("0")
+    assert bulk_discount_rate(20) == Decimal("5")
+    assert bulk_discount_rate(100) == Decimal("10")
+
+
+def test_apply_bulk_discount():
+    assert apply_bulk_discount(Decimal("2.00"), 20) == Decimal("38.00")
+    assert apply_bulk_discount(Decimal("2.00"), 100) == Decimal("180.00")
+
+
+def test_bulk_discount_rate_boundaries():
+    assert bulk_discount_rate(9) == Decimal("0")
+    assert bulk_discount_rate(10) == Decimal("5")
+    assert bulk_discount_rate(49) == Decimal("5")
+    assert bulk_discount_rate(50) == Decimal("10")
+
+
+@pytest.mark.parametrize("quantity", [0, -1])
+def test_bulk_discount_rate_rejects_non_positive_quantity(quantity):
+    with pytest.raises(ValueError):
+        bulk_discount_rate(quantity)

@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from decimal import Decimal
 
+from shopcart.discounts import bulk_discount_rate
 from shopcart.money import round_cents, to_decimal
 
 
@@ -67,3 +68,14 @@ class Cart:
     def subtotal(self) -> Decimal:
         """Sum of line totals, rounded to cents. An empty cart is 0.00."""
         return round_cents(sum((item.total for item in self._items.values()), Decimal("0")))
+
+    def total_with_bulk_discount(self) -> Decimal:
+        """Sum of line totals after each line's bulk discount, rounded to cents.
+
+        Lines are not rounded individually; only the final total is. An empty cart is 0.00.
+        """
+        total = Decimal("0")
+        for item in self._items.values():
+            rate = bulk_discount_rate(item.quantity)
+            total += item.total * (Decimal("100") - rate) / Decimal("100")
+        return round_cents(total)

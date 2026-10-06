@@ -32,3 +32,23 @@ def apply_coupon(amount: Decimal, code: str) -> Decimal:
     if key not in COUPONS:
         raise ValueError(f"unknown coupon code: {code!r}")
     return apply_percent_discount(amount, COUPONS[key])
+
+
+def bulk_discount_rate(quantity: int) -> Decimal:
+    """Return the bulk discount percentage for a line of ``quantity`` units.
+
+    Orders of 10 or more units get 5% off, and orders of 50 or more get 10% off.
+    Smaller orders get no discount. A quantity of zero or less raises ``ValueError``.
+    """
+    if quantity <= 0:
+        raise ValueError("quantity must be positive")
+    if quantity >= 50:
+        return Decimal("10")
+    if quantity >= 10:
+        return Decimal("5")
+    return Decimal("0")
+
+
+def apply_bulk_discount(unit_price: Decimal, quantity: int) -> Decimal:
+    """Return the line total for ``quantity`` units after the bulk discount."""
+    return apply_percent_discount(unit_price * quantity, bulk_discount_rate(quantity))
