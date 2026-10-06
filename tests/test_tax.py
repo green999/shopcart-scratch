@@ -59,3 +59,28 @@ def test_negative_amount_rejected():
         tax_for(Decimal("-0.01"), "CA")
     with pytest.raises(ValueError):
         total_with_tax(Decimal("-0.01"), "CA")
+
+
+def test_negative_zero_returns_positive_zero():
+    assert str(tax_for(Decimal("-0"), "CA")) == "0.00"
+    assert str(total_with_tax(Decimal("-0"), "CA")) == "0.00"
+
+
+@pytest.mark.parametrize("amount", [Decimal("NaN"), Decimal("Infinity"), Decimal("-Infinity")])
+def test_non_finite_amount_rejected(amount):
+    with pytest.raises(ValueError):
+        tax_for(amount, "CA")
+    with pytest.raises(ValueError):
+        total_with_tax(amount, "CA")
+
+
+@pytest.mark.parametrize("amount", [1.5, True])
+def test_float_and_bool_amount_rejected(amount):
+    with pytest.raises(ValueError):
+        tax_for(amount, "CA")
+    with pytest.raises(ValueError):
+        total_with_tax(amount, "CA")
+
+
+def test_int_amount_accepted():
+    assert tax_for(100, "CA") == Decimal("7.25")
