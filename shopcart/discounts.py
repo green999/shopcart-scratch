@@ -1,7 +1,7 @@
 """Discounts applied to an amount."""
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 
 from shopcart.money import round_cents, to_decimal
@@ -42,7 +42,8 @@ def apply_coupon(amount: Decimal, code: str, today: date | None = None) -> Decim
     """Apply the coupon ``code`` to ``amount``.
 
     Codes are case-insensitive and surrounding whitespace is ignored. An unknown
-    code raises ``ValueError``. ``today`` defaults to ``date.today()``. A coupon
+    code, a negative or non-finite amount raises ``ValueError``. ``today`` defaults
+    to ``date.today()``; a ``datetime`` is treated as its date. A coupon
     is valid on its expiry date and invalid the day after; an expired coupon
     raises ``ValueError``. An amount exactly equal to the minimum spend
     qualifies; a lower amount raises ``ValueError``.
@@ -51,7 +52,14 @@ def apply_coupon(amount: Decimal, code: str, today: date | None = None) -> Decim
     if key not in COUPONS:
         raise ValueError(f"unknown coupon code: {code!r}")
     coupon = COUPONS[key]
+    amount = to_decimal(amount)
+    if not amount.is_finite():
+        raise ValueError("amount must be finite")
+    if amount < 0:
+        raise ValueError("amount must not be negative")
     current = today if today is not None else date.today()
+    if isinstance(current, datetime):
+        current = current.date()
     if coupon.expires_on is not None and current > coupon.expires_on:
         raise ValueError(f"coupon {key} expired on {coupon.expires_on.isoformat()}")
     if amount < coupon.min_spend:

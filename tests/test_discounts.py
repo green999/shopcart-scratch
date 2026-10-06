@@ -1,5 +1,5 @@
 from dataclasses import FrozenInstanceError
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 
 import pytest
@@ -145,3 +145,23 @@ def test_today_defaults_to_date_today(monkeypatch):
     monkeypatch.setattr("shopcart.discounts.date", FixedDate)
     with pytest.raises(ValueError, match="expired"):
         apply_coupon(Decimal("100.00"), "SPRING25")
+
+
+@pytest.mark.parametrize("code", ["WELCOME10", "SPRING25"])
+def test_negative_amount_rejected_with_clear_message(code):
+    with pytest.raises(ValueError, match="amount must not be negative"):
+        apply_coupon(Decimal("-0.01"), code, today=TODAY)
+
+
+@pytest.mark.parametrize("amount", [Decimal("NaN"), Decimal("Infinity")])
+def test_non_finite_amount_rejected(amount):
+    with pytest.raises(ValueError, match="finite"):
+        apply_coupon(amount, "WELCOME10", today=TODAY)
+
+
+def test_datetime_today_is_treated_as_its_date():
+    assert apply_coupon(
+        Decimal("100.00"), "SPRING25", today=datetime(2026, 12, 31, 23, 59)
+    ) == Decimal("75.00")
+    with pytest.raises(ValueError, match="expired"):
+        apply_coupon(Decimal("100.00"), "SPRING25", today=datetime(2027, 1, 1, 0, 0))
