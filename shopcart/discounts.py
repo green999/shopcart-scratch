@@ -1,12 +1,28 @@
 """Discounts applied to an amount."""
 
+from dataclasses import dataclass
+from datetime import date
 from decimal import Decimal
 
 from shopcart.money import round_cents, to_decimal
 
-COUPONS: dict[str, Decimal] = {
-    "WELCOME10": Decimal("10"),
-    "SPRING25": Decimal("25"),
+
+@dataclass(frozen=True)
+class Coupon:
+    """A percentage coupon with an optional minimum spend and expiry date."""
+
+    percent: Decimal
+    min_spend: Decimal = Decimal("0")
+    expires_on: date | None = None
+
+
+COUPONS: dict[str, Coupon] = {
+    "WELCOME10": Coupon(percent=Decimal("10")),
+    "SPRING25": Coupon(
+        percent=Decimal("25"),
+        min_spend=Decimal("40.00"),
+        expires_on=date(2026, 12, 31),
+    ),
 }
 
 
@@ -22,16 +38,25 @@ def apply_percent_discount(amount: Decimal, percent: Decimal | int | str) -> Dec
     return round_cents(amount * (Decimal("100") - rate) / Decimal("100"))
 
 
-def apply_coupon(amount: Decimal, code: str) -> Decimal:
+def apply_coupon(amount: Decimal, code: str, today: date | None = None) -> Decimal:
     """Apply the coupon ``code`` to ``amount``.
 
     Codes are case-insensitive and surrounding whitespace is ignored. An unknown
-    code raises ``ValueError``.
+    code raises ``ValueError``. ``today`` defaults to ``date.today()``. A coupon
+    is valid on its expiry date and invalid the day after; an expired coupon
+    raises ``ValueError``. An amount exactly equal to the minimum spend
+    qualifies; a lower amount raises ``ValueError``.
     """
     key = code.strip().upper()
     if key not in COUPONS:
         raise ValueError(f"unknown coupon code: {code!r}")
-    return apply_percent_discount(amount, COUPONS[key])
+    coupon = COUPONS[key]
+    current = today if today is not None else date.today()
+    if coupon.expires_on is not None and current > coupon.expires_on:
+        raise ValueError(f"coupon {key} expired on {coupon.expires_on.isoformat()}")
+    if amount < coupon.min_spend:
+        raise ValueError(f"coupon {key} requires a minimum spend of {coupon.min_spend}")
+    return apply_percent_discount(amount, coupon.percent)
 
 
 def bulk_discount_rate(quantity: int) -> Decimal:
