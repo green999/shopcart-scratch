@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from decimal import Decimal
 
-from shopcart.discounts import apply_bulk_discount
+from shopcart.discounts import bulk_discount_rate
 from shopcart.money import round_cents, to_decimal
 
 
@@ -28,14 +28,21 @@ class Cart:
     def add_item(self, sku: str, unit_price: Decimal | int | str, quantity: int = 1) -> None:
         """Add ``quantity`` of ``sku``.
 
-        Adding a SKU that is already in the cart increases its quantity.
+        Adding a SKU that is already in the cart increases its quantity. The unit
+        price must match the one already in the cart.
         """
         if quantity <= 0:
             raise ValueError("quantity must be positive")
         price = to_decimal(unit_price)
         if price < 0:
             raise ValueError("unit_price must not be negative")
-        self._items[sku] = LineItem(sku=sku, unit_price=price, quantity=quantity)
+        existing = self._items.get(sku)
+        if existing is None:
+            self._items[sku] = LineItem(sku=sku, unit_price=price, quantity=quantity)
+            return
+        if existing.unit_price != price:
+            raise ValueError(f"unit_price for {sku} does not match the cart")
+        existing.quantity += quantity
 
     def remove_item(self, sku: str, quantity: int | None = None) -> None:
         """Remove ``quantity`` of ``sku``, or the whole line when ``quantity`` is None."""
@@ -63,10 +70,12 @@ class Cart:
         return round_cents(sum((item.total for item in self._items.values()), Decimal("0")))
 
     def total_with_bulk_discount(self) -> Decimal:
-        """Sum of line totals after each line's bulk discount, rounded to cents."""
-        return round_cents(
-            sum(
-                (apply_bulk_discount(item.unit_price, item.quantity) for item in self.items),
-                Decimal("0"),
-            )
-        )
+        """Sum of line totals after each line's bulk discount, rounded to cents.
+
+        Lines are not rounded individually; only the final total is. An empty cart is 0.00.
+        """
+        total = Decimal("0")
+        for item in self._items.values():
+            rate = bulk_discount_rate(item.quantity)
+            total += item.total * (Decimal("100") - rate) / Decimal("100")
+        return round_cents(total)

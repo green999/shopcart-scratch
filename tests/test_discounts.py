@@ -44,3 +44,16 @@ def test_bulk_discount_rate_tiers():
 def test_apply_bulk_discount():
     assert apply_bulk_discount(Decimal("2.00"), 20) == Decimal("38.00")
     assert apply_bulk_discount(Decimal("2.00"), 100) == Decimal("180.00")
+
+
+def test_bulk_discount_rate_boundaries():
+    assert bulk_discount_rate(9) == Decimal("0")
+    assert bulk_discount_rate(10) == Decimal("5")
+    assert bulk_discount_rate(49) == Decimal("5")
+    assert bulk_discount_rate(50) == Decimal("10")
+
+
+@pytest.mark.parametrize("quantity", [0, -1])
+def test_bulk_discount_rate_rejects_non_positive_quantity(quantity):
+    with pytest.raises(ValueError):
+        bulk_discount_rate(quantity)

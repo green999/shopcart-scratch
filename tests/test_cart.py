@@ -60,3 +60,20 @@ def test_total_with_bulk_discount():
     cart.add_item("pen", "1.00", 20)
     cart.add_item("notebook", "3.00", 2)
     assert cart.total_with_bulk_discount() == Decimal("25.00")
+
+
+def test_total_with_bulk_discount_empty_cart():
+    assert Cart().total_with_bulk_discount() == Decimal("0.00")
+
+
+def test_total_with_bulk_discount_exactly_ten_units():
+    cart = Cart()
+    cart.add_item("pen", "1.00", 10)
+    assert cart.total_with_bulk_discount() == Decimal("9.50")
+
+
+def test_total_with_bulk_discount_rounds_only_once():
+    cart = Cart()
+    for sku in ("a", "b", "c"):
+        cart.add_item(sku, "0.01", 10)
+    assert cart.total_with_bulk_discount() == Decimal("0.29")

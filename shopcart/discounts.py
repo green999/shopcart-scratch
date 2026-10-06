@@ -38,11 +38,13 @@ def bulk_discount_rate(quantity: int) -> Decimal:
     """Return the bulk discount percentage for a line of ``quantity`` units.
 
     Orders of 10 or more units get 5% off, and orders of 50 or more get 10% off.
-    Smaller orders get no discount.
+    Smaller orders get no discount. A quantity of zero or less raises ``ValueError``.
     """
-    if quantity > 50:
+    if quantity <= 0:
+        raise ValueError("quantity must be positive")
+    if quantity >= 50:
         return Decimal("10")
-    if quantity > 10:
+    if quantity >= 10:
         return Decimal("5")
     return Decimal("0")
 
