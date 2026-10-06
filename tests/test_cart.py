@@ -113,3 +113,40 @@ def test_total_unknown_method_rejected():
 @pytest.mark.parametrize("method", ["standard", "express", "pickup"])
 def test_empty_cart_total_is_zero_for_every_method(method):
     assert Cart().total(method) == Decimal("0.00")
+
+
+def test_add_item_rejects_negative_unit_price():
+    with pytest.raises(ValueError):
+        Cart().add_item("pen", "-0.01")
+
+
+def test_add_item_accepts_zero_unit_price():
+    cart = Cart()
+    cart.add_item("freebie", "0.00", 1)
+    assert cart.subtotal() == Decimal("0.00")
+
+
+@pytest.mark.parametrize("quantity", [0, -1])
+def test_remove_item_rejects_non_positive_quantity(quantity):
+    cart = Cart()
+    cart.add_item("pen", "1.50", 5)
+    with pytest.raises(ValueError):
+        cart.remove_item("pen", quantity)
+    assert cart.quantity_of("pen") == 5
+
+
+def test_remove_item_quantity_equal_to_line_removes_it():
+    cart = Cart()
+    cart.add_item("pen", "1.50", 5)
+    cart.remove_item("pen", 5)
+    assert cart.quantity_of("pen") == 0
+
+
+def test_quantity_of_missing_sku_is_zero():
+    assert Cart().quantity_of("nope") == 0
+
+
+def test_subtotal_rounds_half_up_once():
+    cart = Cart()
+    cart.add_item("a", "0.005", 1)
+    assert cart.subtotal() == Decimal("0.01")
