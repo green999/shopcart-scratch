@@ -57,3 +57,22 @@ def test_bulk_discount_rate_boundaries():
 def test_bulk_discount_rate_rejects_non_positive_quantity(quantity):
     with pytest.raises(ValueError):
         bulk_discount_rate(quantity)
+
+
+def test_percent_discount_rejects_float_percent():
+    with pytest.raises(ValueError):
+        apply_percent_discount(Decimal("80.00"), 12.5)
+
+
+def test_percent_discount_rounds_half_up():
+    assert apply_percent_discount(Decimal("0.05"), 10) == Decimal("0.05")
+    assert apply_percent_discount(Decimal("0.15"), 50) == Decimal("0.08")
+
+
+def test_percent_discount_on_zero_amount():
+    assert apply_percent_discount(Decimal("0"), 50) == Decimal("0.00")
+
+
+def test_every_coupon_applies_its_rate():
+    assert apply_coupon(Decimal("100.00"), "SPRING25") == Decimal("75.00")
+    assert apply_coupon(Decimal("100.00"), "WELCOME10") == Decimal("90.00")

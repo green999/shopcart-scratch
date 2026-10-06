@@ -48,3 +48,14 @@ def test_unknown_method_rejected():
 def test_negative_subtotal_rejected():
     with pytest.raises(ValueError):
         shipping_cost(Decimal("-0.01"))
+
+
+def test_zero_subtotal_pickup_and_express():
+    assert shipping_cost(Decimal("0"), "pickup") == Decimal("0.00")
+    assert shipping_cost(Decimal("0"), "express") == Decimal("14.99")
+
+
+def test_negative_subtotal_rejected_for_every_method():
+    for method in ("standard", "express", "pickup"):
+        with pytest.raises(ValueError):
+            shipping_cost(Decimal("-1"), method)

@@ -35,3 +35,34 @@ def test_invalid_arguments_are_rejected():
         paginate([1, 2, 3], page=0)
     with pytest.raises(ValueError):
         paginate([1, 2, 3], per_page=0)
+
+
+def test_single_item_single_page():
+    page = paginate([1], page=1, per_page=20)
+    assert page.total_pages == 1
+    assert page.items == [1]
+
+
+def test_page_attributes_are_reported():
+    page = paginate(list(range(45)), page=2, per_page=20)
+    assert (page.page, page.per_page, page.total_items) == (2, 20, 45)
+    assert page.has_next
+    assert page.has_previous
+
+
+def test_empty_sequence_rejects_page_two():
+    with pytest.raises(ValueError):
+        paginate([], page=2)
+
+
+@pytest.mark.xfail(reason="https://github.com/green999/shopcart-scratch/issues/8")
+def test_exact_multiple_of_per_page_has_no_extra_page():
+    page = paginate(list(range(40)), page=2, per_page=20)
+    assert page.total_pages == 2
+    assert not page.has_next
+
+
+@pytest.mark.xfail(reason="https://github.com/green999/shopcart-scratch/issues/8")
+def test_page_past_the_end_rejected_for_exact_multiple():
+    with pytest.raises(ValueError):
+        paginate(list(range(40)), page=3, per_page=20)
