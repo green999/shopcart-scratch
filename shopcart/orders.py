@@ -35,7 +35,7 @@ def paginate(items: Sequence[T], page: int = 1, per_page: int = 20) -> Page[T]:
     if per_page < 1:
         raise ValueError("per_page must be 1 or greater")
     total_items = len(items)
-    total_pages = total_items // per_page + 1
+    total_pages = max(1, -(-total_items // per_page))
     if page > total_pages:
         raise ValueError(f"page {page} is past the last page ({total_pages})")
     start = (page - 1) * per_page
