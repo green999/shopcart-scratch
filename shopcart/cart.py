@@ -57,6 +57,40 @@ class Cart:
             raise ValueError("quantity must be positive")
         item.quantity -= quantity
 
+    def to_dict(self) -> dict[str, list[dict[str, str | int]]]:
+        """Return the cart as plain data, safe for ``json.dumps``.
+
+        Prices are strings so no precision is lost, and items keep the order
+        they were added in. An empty cart gives ``{"items": []}``.
+        """
+        return {
+            "items": [
+                {"sku": item.sku, "unit_price": str(item.unit_price), "quantity": item.quantity}
+                for item in self._items.values()
+            ]
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "Cart":
+        """Rebuild a cart from ``to_dict`` output by calling ``add_item``.
+
+        All ``add_item`` validation applies. A missing key, a float price, a
+        non-integer or non-positive quantity, or malformed data raises
+        ``ValueError``. Unknown extra keys are ignored. An empty ``items`` list
+        gives an empty cart.
+        """
+        try:
+            entries = data["items"]
+            rows = [(entry["sku"], entry["unit_price"], entry["quantity"]) for entry in entries]
+        except (KeyError, TypeError) as exc:
+            raise ValueError(f"invalid cart data: {exc!r}") from None
+        cart = cls()
+        for sku, unit_price, quantity in rows:
+            if isinstance(quantity, bool) or not isinstance(quantity, int):
+                raise ValueError("quantity must be an integer")
+            cart.add_item(sku, unit_price, quantity)
+        return cart
+
     @property
     def items(self) -> list[LineItem]:
         return list(self._items.values())

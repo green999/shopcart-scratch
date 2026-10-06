@@ -150,3 +150,107 @@ def test_subtotal_rounds_half_up_once():
     cart = Cart()
     cart.add_item("a", "0.005", 1)
     assert cart.subtotal() == Decimal("0.01")
+
+
+def _three_item_cart() -> Cart:
+    cart = Cart()
+    cart.add_item("pen", "1.50", 2)
+    cart.add_item("notebook", "0.10", 3)
+    cart.add_item("bag", "19.99", 1)
+    return cart
+
+
+def test_to_dict_shape_and_order():
+    assert _three_item_cart().to_dict() == {
+        "items": [
+            {"sku": "pen", "unit_price": "1.50", "quantity": 2},
+            {"sku": "notebook", "unit_price": "0.10", "quantity": 3},
+            {"sku": "bag", "unit_price": "19.99", "quantity": 1},
+        ]
+    }
+
+
+def test_to_dict_is_json_serializable():
+    import json
+
+    data = _three_item_cart().to_dict()
+    assert json.loads(json.dumps(data)) == data
+
+
+def test_round_trip_with_several_items():
+    cart = _three_item_cart()
+    rebuilt = Cart.from_dict(cart.to_dict())
+    assert rebuilt.items == cart.items
+    assert rebuilt.subtotal() == cart.subtotal()
+    assert [item.sku for item in rebuilt.items] == ["pen", "notebook", "bag"]
+
+
+def test_round_trip_through_json():
+    import json
+
+    cart = _three_item_cart()
+    rebuilt = Cart.from_dict(json.loads(json.dumps(cart.to_dict())))
+    assert rebuilt.items == cart.items
+
+
+def test_empty_cart_round_trips():
+    assert Cart().to_dict() == {"items": []}
+    assert Cart.from_dict(Cart().to_dict()).items == []
+
+
+def test_price_survives_exactly():
+    cart = Cart()
+    cart.add_item("dime", "0.10", 1)
+    rebuilt = Cart.from_dict(cart.to_dict())
+    assert str(rebuilt.items[0].unit_price) == "0.10"
+    assert rebuilt.items[0].unit_price == Decimal("0.10")
+
+
+def test_from_dict_ignores_unknown_keys():
+    data = {
+        "version": 2,
+        "items": [{"sku": "pen", "unit_price": "1.50", "quantity": 2, "note": "x"}],
+    }
+    assert Cart.from_dict(data).quantity_of("pen") == 2
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        {},
+        {"items": [{"unit_price": "1.50", "quantity": 1}]},
+        {"items": [{"sku": "pen", "quantity": 1}]},
+        {"items": [{"sku": "pen", "unit_price": "1.50"}]},
+        {"items": None},
+        {"items": [None]},
+        None,
+    ],
+)
+def test_from_dict_rejects_missing_keys_and_malformed_data(data):
+    with pytest.raises(ValueError):
+        Cart.from_dict(data)
+
+
+def test_from_dict_rejects_float_price():
+    with pytest.raises(ValueError):
+        Cart.from_dict({"items": [{"sku": "pen", "unit_price": 1.5, "quantity": 1}]})
+
+
+@pytest.mark.parametrize("quantity", [0, -1, 1.5, True, "2"])
+def test_from_dict_rejects_bad_quantity(quantity):
+    with pytest.raises(ValueError):
+        Cart.from_dict({"items": [{"sku": "pen", "unit_price": "1.50", "quantity": quantity}]})
+
+
+def test_from_dict_applies_add_item_validation():
+    with pytest.raises(ValueError):
+        Cart.from_dict({"items": [{"sku": "pen", "unit_price": "-1.00", "quantity": 1}]})
+    with pytest.raises(ValueError):
+        Cart.from_dict(
+            {
+                "items": [
+                    {"sku": "pen", "unit_price": "1.50", "quantity": 1},
+                    {"sku": "pen", "unit_price": "1.75", "quantity": 1},
+                ]
+            }
+        )
