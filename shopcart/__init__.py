@@ -7,7 +7,7 @@ from shopcart.discounts import (
     apply_percent_discount,
     bulk_discount_rate,
 )
-from shopcart.money import round_cents, to_decimal
+from shopcart.money import format_money, parse_money, round_cents, to_decimal
 from shopcart.orders import Page, paginate
 from shopcart.shipping import shipping_cost
 from shopcart.tax import tax_for, total_with_tax
@@ -20,7 +20,9 @@ __all__ = [
     "apply_coupon",
     "apply_percent_discount",
     "bulk_discount_rate",
+    "format_money",
     "paginate",
+    "parse_money",
     "round_cents",
     "shipping_cost",
     "tax_for",
