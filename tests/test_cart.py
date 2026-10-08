@@ -271,3 +271,38 @@ def test_from_dict_rejects_invalid_price_with_value_error(price):
 def test_from_dict_accepts_int_price():
     cart = Cart.from_dict({"items": [{"sku": "pen", "unit_price": 3, "quantity": 1}]})
     assert cart.subtotal() == Decimal("3.00")
+
+
+def test_add_99_at_once_is_allowed():
+    cart = Cart()
+    cart.add_item("pen", "1.50", 99)
+    assert cart.quantity_of("pen") == 99
+
+
+def test_add_100_at_once_is_rejected():
+    cart = Cart()
+    with pytest.raises(ValueError):
+        cart.add_item("pen", "1.50", 100)
+    assert cart.quantity_of("pen") == 0
+    assert cart.items == []
+
+
+def test_add_to_reach_exactly_99_is_allowed():
+    cart = Cart()
+    cart.add_item("pen", "1.50", 95)
+    cart.add_item("pen", "1.50", 4)
+    assert cart.quantity_of("pen") == 99
+
+
+def test_add_beyond_99_is_rejected_and_cart_unchanged():
+    cart = Cart()
+    cart.add_item("pen", "1.50", 95)
+    with pytest.raises(ValueError):
+        cart.add_item("pen", "1.50", 5)
+    assert cart.quantity_of("pen") == 95
+
+
+def test_max_quantity_error_names_sku_and_limit():
+    cart = Cart()
+    with pytest.raises(ValueError, match=r"pen.*99"):
+        cart.add_item("pen", "1.50", 100)

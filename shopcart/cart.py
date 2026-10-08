@@ -7,6 +7,8 @@ from shopcart.discounts import bulk_discount_rate
 from shopcart.money import round_cents, to_decimal
 from shopcart.shipping import shipping_cost
 
+MAX_QUANTITY_PER_ITEM = 99
+
 
 @dataclass
 class LineItem:
@@ -31,6 +33,8 @@ class Cart:
 
         Adding a SKU that is already in the cart increases its quantity. The unit
         price must match the one already in the cart.
+        A line may hold at most ``MAX_QUANTITY_PER_ITEM`` (99) units: exactly 99 is
+        allowed, more raises ``ValueError`` and leaves the cart unchanged.
         """
         if quantity <= 0:
             raise ValueError("quantity must be positive")
@@ -38,6 +42,11 @@ class Cart:
         if price < 0:
             raise ValueError("unit_price must not be negative")
         existing = self._items.get(sku)
+        new_quantity = quantity + (existing.quantity if existing else 0)
+        if new_quantity > MAX_QUANTITY_PER_ITEM:
+            raise ValueError(
+                f"quantity for {sku} would exceed the limit of {MAX_QUANTITY_PER_ITEM} per item"
+            )
         if existing is None:
             self._items[sku] = LineItem(sku=sku, unit_price=price, quantity=quantity)
             return
